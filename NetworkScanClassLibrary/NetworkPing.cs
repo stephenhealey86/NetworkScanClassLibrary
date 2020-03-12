@@ -15,6 +15,7 @@ namespace NetworkScanClassLibrary
         private Ping ping = new Ping();
         public delegate void Del(string ipAddress);
         public delegate Task DelAsync(string ipAddress);
+        public Del ScanNetworkCurrentIpAddressDelegate;
         public Del ScanNetworkFoundDelegate;
         public DelAsync ScanNetworkFoundAsyncDelegate;
 
@@ -68,6 +69,8 @@ namespace NetworkScanClassLibrary
                     var ipAddressess = GetRangeOfAddresses(startAddress, endAddress);
                     foreach (var address in ipAddressess)
                     {
+                        ScanNetworkCurrentIpAddressDelegate?.Invoke(address);
+
                         if (await ScanAddress(address, 200, 2) != "Failed")
                         {
                             listToReturn.Add(address);
