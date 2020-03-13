@@ -13,6 +13,7 @@ namespace NetworkScanClassLibrary
     public class NetworkPing
     {
         private Ping ping = new Ping();
+        private bool cancelFlag = false;
         public delegate void Del(string ipAddress);
         public delegate Task DelAsync(string ipAddress);
         public Del ScanNetworkCurrentIpAddressDelegate;
@@ -60,6 +61,7 @@ namespace NetworkScanClassLibrary
         /// <returns>Returns a <see cref="List{String}"/> of address that replied</returns>
         public async Task<List<string>> ScanNetwork(string startAddress, string endAddress, string subnet)
         {
+            cancelFlag = false;
             var listToReturn = new List<string>();
 
             if (IsValidateIP(startAddress) && IsValidateIP(endAddress) && IsValidateIP(subnet))
@@ -69,15 +71,18 @@ namespace NetworkScanClassLibrary
                     var ipAddressess = GetRangeOfAddresses(startAddress, endAddress);
                     foreach (var address in ipAddressess)
                     {
-                        ScanNetworkCurrentIpAddressDelegate?.Invoke(address);
-
-                        if (await ScanAddress(address, 200, 2) != "Failed")
+                        if (!cancelFlag)
                         {
-                            listToReturn.Add(address);
-                            ScanNetworkFoundDelegate?.Invoke(address);
-                            if (ScanNetworkFoundAsyncDelegate != null)
+                            ScanNetworkCurrentIpAddressDelegate?.Invoke(address);
+
+                            if (await ScanAddress(address, 200, 2) != "Failed")
                             {
-                                await ScanNetworkFoundAsyncDelegate(address);
+                                listToReturn.Add(address);
+                                ScanNetworkFoundDelegate?.Invoke(address);
+                                if (ScanNetworkFoundAsyncDelegate != null)
+                                {
+                                    await ScanNetworkFoundAsyncDelegate(address);
+                                }
                             }
                         }
                     }
@@ -93,6 +98,7 @@ namespace NetworkScanClassLibrary
         /// <returns><see cref="List{int}"/> if any address is invalid it will return an empty list, response time is set to -1 if timeour occurs</returns>
         public async Task<List<int>> ScanAddressesForAverageResponseTime(List<string> listOfAddressToScan)
         {
+            cancelFlag = false;
             var listToReturn = new List<int>();
 
             // Return empty list if any address is not valid
@@ -106,14 +112,17 @@ namespace NetworkScanClassLibrary
 
             foreach (var address in listOfAddressToScan)
             {
-                var result = await ScanAddress(address);
-                if (result != "Failed")
+                if (!cancelFlag)
                 {
-                    listToReturn.Add(int.Parse(result));
-                }
-                else
-                {
-                    listToReturn.Add(-1);
+                    var result = await ScanAddress(address);
+                    if (result != "Failed")
+                    {
+                        listToReturn.Add(int.Parse(result));
+                    }
+                    else
+                    {
+                        listToReturn.Add(-1);
+                    }
                 }
             }
 
@@ -208,6 +217,11 @@ namespace NetworkScanClassLibrary
             }
 
             return listToReturn;
+        }
+
+        public void CancelAllScanning()
+        {
+            cancelFlag = true;
         }
 
         public string GetFirstIpAddressInNetwork()

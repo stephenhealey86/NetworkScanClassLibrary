@@ -222,8 +222,8 @@ namespace NetworkScanUnitTest
             // Arrange & Act
             var actualIpSettings = new InterfaceAdapterIpSettings()
             {
-                IpAddress = "10.0.169.53",
-                Subnet = "255.255.0.0"
+                IpAddress = "192.168.1.12",
+                Subnet = "255.255.255.0"
             };
             var ipSettings = ping.GetLocalIpAddressAndSubnet();
             // Assert
@@ -245,7 +245,7 @@ namespace NetworkScanUnitTest
         public void GetFirstIpAddressInNetworkShouldReturnFirstAddress()
         {
             // Arrange
-            var firstIpAddress = "10.0.0.1";
+            var firstIpAddress = "192.168.1.1";
             // Act
             var result = ping.GetFirstIpAddressInNetwork();
             // Assert
@@ -258,7 +258,7 @@ namespace NetworkScanUnitTest
         public void GetLastIpAddressInNetworkShouldReturnLastIpAddress()
         {
             // Arrange
-            var ipAddress = "10.0.255.254";
+            var ipAddress = "192.168.1.254";
             // Act
             var result = ping.GetLastIpAddressInNetwork();
             // Assert
