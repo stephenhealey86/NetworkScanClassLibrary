@@ -41,15 +41,46 @@ namespace NetworkScanClassLibrary
                 if (pingReplyList.Count > 0)
                 {
                     long totalTime = 0;
+                    long maxTime = 0;
                     foreach (var res in pingReplyList)
                     {
                         totalTime += res.RoundtripTime;
+                        maxTime = res.RoundtripTime > maxTime ? res.RoundtripTime : maxTime;
                     }
                     var averageTime = totalTime / pingReplyList.Count;
                     return averageTime.ToString();
                 }
             }
             return "Failed";
+        }
+
+        public async Task<Tuple<string, string>> ScanAddressMaxTime(string ipAddress, int timeout = 500, int numberOfPings = 8)
+        {
+            if (IsValidateIP(ipAddress))
+            {
+                var pingReplyList = new List<PingReply>();
+                for (int i = 0; i < numberOfPings; i++)
+                {
+                    var respone = await ping.SendPingAsync(ipAddress, timeout);
+                    if (respone.Status == IPStatus.Success)
+                    {
+                        pingReplyList.Add(respone);
+                    }
+                }
+                if (pingReplyList.Count > 0)
+                {
+                    long totalTime = 0;
+                    long maxTime = 0;
+                    foreach (var res in pingReplyList)
+                    {
+                        totalTime += res.RoundtripTime;
+                        maxTime = res.RoundtripTime > maxTime ? res.RoundtripTime : maxTime;
+                    }
+                    var averageTime = totalTime / pingReplyList.Count;
+                    return new Tuple<string, string>(averageTime.ToString(), maxTime.ToString());
+                }
+            }
+            return new Tuple<string, string>("Failed", null);
         }
 
         /// <summary>
