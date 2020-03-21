@@ -50,6 +50,7 @@
     <Compile Include="InterfaceAdapterIpSettings.cs" />
     <Compile Include="NetworkPing.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScanResponse.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

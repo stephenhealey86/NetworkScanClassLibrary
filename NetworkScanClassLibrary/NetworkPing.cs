@@ -17,44 +17,30 @@ namespace NetworkScanClassLibrary
         public delegate void Del(string ipAddress);
         public delegate Task DelAsync(string ipAddress);
         public Del ScanNetworkCurrentIpAddressDelegate;
-        public Del ScanNetworkFoundDelegate;
-        public DelAsync ScanNetworkFoundAsyncDelegate;
+        public DelAsync ScanNetworkFoundDelegateAsync;
 
         /// <summary>
-        /// Returns the average response time of a ping in milliseconds as a string
+        /// Returns true if address replys
         /// </summary>
-        /// <param name="ipAddress">IP Addrss to scan</param>
+        /// <param name="ipAddress">IP Address to scan</param>
         /// <returns></returns>
-        public async Task<string> ScanAddress(string ipAddress, int timeout = 500, int numberOfPings = 8)
+        public async Task<bool> ScanAddress(string ipAddress, int timeout = 500, int numberOfPings = 8)
         {
             if (IsValidateIP(ipAddress))
             {
-                var pingReplyList = new List<PingReply>();
                 for (int i = 0; i < numberOfPings; i++)
                 {
                     var respone = await ping.SendPingAsync(ipAddress, timeout);
                     if (respone.Status == IPStatus.Success)
                     {
-                        pingReplyList.Add(respone);
+                        return true;
                     }
-                }
-                if (pingReplyList.Count > 0)
-                {
-                    long totalTime = 0;
-                    long maxTime = 0;
-                    foreach (var res in pingReplyList)
-                    {
-                        totalTime += res.RoundtripTime;
-                        maxTime = res.RoundtripTime > maxTime ? res.RoundtripTime : maxTime;
-                    }
-                    var averageTime = totalTime / pingReplyList.Count;
-                    return averageTime.ToString();
                 }
             }
-            return "Failed";
+            return false;
         }
 
-        public async Task<Tuple<string, string>> ScanAddressMaxTime(string ipAddress, int timeout = 500, int numberOfPings = 8)
+        public async Task<ScanResponse> ScanAddressForResponseTimes(string ipAddress, int timeout = 500, int numberOfPings = 8)
         {
             if (IsValidateIP(ipAddress))
             {
@@ -77,10 +63,11 @@ namespace NetworkScanClassLibrary
                         maxTime = res.RoundtripTime > maxTime ? res.RoundtripTime : maxTime;
                     }
                     var averageTime = totalTime / pingReplyList.Count;
-                    return new Tuple<string, string>(averageTime.ToString(), maxTime.ToString());
+                    return new ScanResponse() { IpAddress = ipAddress, AverageResponse = averageTime.ToString(), MaxResponse = maxTime.ToString(), Status = ScanResponseStatus.ok };
                 }
+                return new ScanResponse() { IpAddress = ipAddress, AverageResponse = "Timeout", MaxResponse = "Timeout", Status = ScanResponseStatus.timeout };
             }
-            return new Tuple<string, string>("Failed", null);
+            return new ScanResponse() { IpAddress = ipAddress, AverageResponse = "Invalid", MaxResponse = "Invalid", Status = ScanResponseStatus.invalidIp };
         }
 
         /// <summary>
@@ -106,57 +93,18 @@ namespace NetworkScanClassLibrary
                         {
                             ScanNetworkCurrentIpAddressDelegate?.Invoke(address);
 
-                            if (await ScanAddress(address, 200, 2) != "Failed")
+                            if (await ScanAddress(address, 200, 2))
                             {
                                 listToReturn.Add(address);
-                                ScanNetworkFoundDelegate?.Invoke(address);
-                                if (ScanNetworkFoundAsyncDelegate != null)
+                                if (ScanNetworkFoundDelegateAsync != null)
                                 {
-                                    await ScanNetworkFoundAsyncDelegate(address);
+                                    await ScanNetworkFoundDelegateAsync(address);
                                 }
                             }
                         }
                     }
                 }
             }
-            return listToReturn;
-        }
-
-        /// <summary>
-        /// Pings each address in the list multiple times and stores the average response time
-        /// </summary>
-        /// <param name="listOfAddressToScan"><see cref="List{String}"/> of address to scan</param>
-        /// <returns><see cref="List{int}"/> if any address is invalid it will return an empty list, response time is set to -1 if timeour occurs</returns>
-        public async Task<List<int>> ScanAddressesForAverageResponseTime(List<string> listOfAddressToScan)
-        {
-            cancelFlag = false;
-            var listToReturn = new List<int>();
-
-            // Return empty list if any address is not valid
-            foreach (var address in listOfAddressToScan)
-            {
-                if (!IsValidateIP(address))
-                {
-                    return listToReturn;
-                }
-            }
-
-            foreach (var address in listOfAddressToScan)
-            {
-                if (!cancelFlag)
-                {
-                    var result = await ScanAddress(address);
-                    if (result != "Failed")
-                    {
-                        listToReturn.Add(int.Parse(result));
-                    }
-                    else
-                    {
-                        listToReturn.Add(-1);
-                    }
-                }
-            }
-
             return listToReturn;
         }
 

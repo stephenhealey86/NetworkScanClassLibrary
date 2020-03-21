@@ -14,14 +14,14 @@ namespace NetworkScanUnitTest
         #region ScanAddressUnitTests
         [TestMethod]
         [Timeout(5000)]
-        public async Task ScanAddressShouldReturnFailed()
+        public async Task ScanAddressShouldReturnFalse()
         {
             // Arrange
             var ipAddress = "200.168.1.1";
             // Act
             var response = await ping.ScanAddress(ipAddress);
             // Assert
-            Assert.AreEqual(response, "Failed");
+            Assert.IsFalse(response);
         }
 
         [TestMethod]
@@ -32,19 +32,56 @@ namespace NetworkScanUnitTest
             // Act
             var response = await ping.ScanAddress(ipAddress);
             // Assert
-            Assert.AreEqual(response, "Failed");
+            Assert.IsFalse(response);
         }
 
         [TestMethod]
         [Timeout(4000)]
-        public async Task ScanAddressShouldReturnTime()
+        public async Task ScanAddressShouldReturnTrue()
         {
             // Arrange
             var ipAddress = "8.8.8.8";
             // Act
             var response = await ping.ScanAddress(ipAddress);
             // Assert
-            Assert.IsTrue(int.Parse(response) >= 0);
+            Assert.IsTrue(response);
+        }
+        #endregion
+
+        #region ScanAddressForResponseTimesUnitTests
+        [TestMethod]
+        [Timeout(5000)]
+        public async Task ScanAddressForResponseTimesShouldReturnTimeout()
+        {
+            // Arrange
+            var ipAddress = "200.168.1.1";
+            // Act
+            var response = await ping.ScanAddressForResponseTimes(ipAddress);
+            // Assert
+            Assert.AreEqual(response.Status, ScanResponseStatus.timeout);
+        }
+
+        [TestMethod]
+        public async Task ScanAddressForResponseTimesShouldFailOnInvalidIp()
+        {
+            // Arrange
+            var ipAddress = "192.168";
+            // Act
+            var response = await ping.ScanAddressForResponseTimes(ipAddress);
+            // Assert
+            Assert.AreEqual(response.Status, ScanResponseStatus.invalidIp);
+        }
+
+        [TestMethod]
+        [Timeout(4000)]
+        public async Task ScanAddressForResponseTimesShouldReturnOk()
+        {
+            // Arrange
+            var ipAddress = "8.8.8.8";
+            // Act
+            var response = await ping.ScanAddressForResponseTimes(ipAddress);
+            // Assert
+            Assert.AreEqual(response.Status, ScanResponseStatus.ok);
         }
         #endregion
 
@@ -85,7 +122,7 @@ namespace NetworkScanUnitTest
             var startAddress = "192.168.1.1";
             var endAddress = "192.168.1.50";
             var subnet = "255.255.255.0";
-            ping.ScanNetworkFoundDelegate += (value) =>
+            ping.ScanNetworkFoundDelegateAsync += async (value) =>
             {
                 list.Add(value);
             };
@@ -95,60 +132,7 @@ namespace NetworkScanUnitTest
             Assert.IsTrue(list.Count > 0);
         }
         #endregion
-
-        #region ScanAddressesForAverageResponseTimeUnitTests
-        [TestMethod]
-        public async Task ScanAddressesForAverageResponseTimeShouldReturnAtLeastOne()
-        {
-            // Arrange
-            var listOfAddressToScan = new List<string>()
-            {
-                "192.168.1.1",
-                "192.168.1.20",
-                "192.168.1.30"
-            };
-            // Act
-            var listOfResponseTimes = await ping.ScanAddressesForAverageResponseTime(listOfAddressToScan);
-            // Assert
-            Assert.IsTrue(listOfResponseTimes.Count > 0);
-        }
-
-        [TestMethod]
-        public async Task ScanAddressesForAverageResponseTimeShouldReturnListOfTimeouts()
-        {
-            // Arrange
-            var listOfAddressToScan = new List<string>()
-            {
-                "192.168.1.200",
-                "192.168.1.210",
-                "192.168.1.220"
-            };
-            // Act
-            var listOfResponseTimes = await ping.ScanAddressesForAverageResponseTime(listOfAddressToScan);
-            // Assert
-            Assert.IsTrue(listOfResponseTimes.Count > 0);
-            foreach (var res in listOfResponseTimes)
-            {
-                Assert.AreEqual(res, -1);
-            }
-        }
-
-        [TestMethod]
-        public async Task ScanAddressesForAverageResponseTimeShouldReturnEmptyListDueToInvalidIPAddress()
-        {
-            // Arrange
-            var listOfAddressToScan = new List<string>()
-            {
-                "192.168.1.256",
-                "192.168.1.1"
-            };
-            // Act
-            var listOfResponseTimes = await ping.ScanAddressesForAverageResponseTime(listOfAddressToScan);
-            // Assert
-            Assert.IsTrue(listOfResponseTimes.Count == 0);
-        }
-        #endregion
-
+        
         #region IsValidateIpUnitTest
         [TestMethod]
         public void IsValidateIPShouldReturnTrue()
