@@ -47,10 +47,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="InterfaceAdapterIpSettings.cs" />
+    <Compile Include="Models\INetworkPing.cs" />
+    <Compile Include="Models\InterfaceAdapterIpSettings.cs" />
+    <Compile Include="Models\NetworkSettings.cs" />
     <Compile Include="NetworkPing.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ScanResponse.cs" />
+    <Compile Include="Models\ScanResponse.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="NetworkPingTest.cs" />
+    <Compile Include="NetworkSettingsTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NetworkScanClassLibrary\NetworkScanClassLibrary.csproj">
